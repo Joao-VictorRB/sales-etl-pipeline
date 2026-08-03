@@ -1,0 +1,8 @@
+id_produto,nome_produto,categoria,marca
+10,Notebook,Eletrônicos,Dell
+20,Mouse,Acessórios,Logitech
+30,Teclado,acessorios,Logitech
+40,Cadeira Gamer,Móveis,Pichau
+50,Monitor,Eletronicos,Samsung
+60,Smartphone,Eletrônicos,Samsung
+999,Produto Desconhecido,, 
