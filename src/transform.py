@@ -18,7 +18,18 @@ def remove_duplicates(df):
 
     df = df.drop_duplicates()
     return df
-     
+
+def validate_references(df_vendas, df_clientes, df_produtos):
+
+    clientes_validos = df_clientes["id_cliente"].unique()
+    produtos_validos = df_produtos["id_produto"].unique()
+
+    df_vendas = df_vendas[
+        df_vendas["id_cliente"].isin(clientes_validos)
+        & df_vendas["id_produto"].isin(produtos_validos)
+    ]
+
+    return df_vendas
 
 def transform_clientes(df):
 
@@ -59,11 +70,13 @@ def transform_produtos(df):
     return df
 
 
-def transform_vendas(df):
+def transform_vendas(df,df_clientes,df_produtos):
 
     df = standardize_columns(df)
     df = treat_nulls(df)
     df = remove_duplicates(df)
+
+    df = validate_references(df,df_clientes,df_produtos)
 
     #Date
 
@@ -90,15 +103,19 @@ def transform_vendas(df):
     
 
     for col,dtype in types.items():
+        
 
         if col in df.columns:
 
             df[col] = df[col].fillna(0)
 
+            df[col] = pd.to_numeric(df[col], errors="coerce")
             avg =  df.loc[df[col] >= 0, col].mean()
             df.loc[df[col] < 0, col] = avg
 
             df[col] = df[col].astype(dtype)
+
+    df['valor_unitario'] = df['valor_unitario'].fillna(df['valor_unitario'].mean())
 
     df["valor_total"] = df["valor_unitario"] * df["quantidade"]
 
@@ -115,7 +132,7 @@ def transform(dfs):
         elif name_file == 'produtos.csv':
             dfs[name_file] = transform_produtos(df)
         elif name_file == 'vendas.csv':
-            dfs[name_file] = transform_vendas(df)
+            dfs[name_file] = transform_vendas(df,dfs['clientes.csv'],dfs['produtos.csv'])
         else:
             pass
 
