@@ -1,4 +1,4 @@
-from connection import con, closeDB
+from connect.connection import con, closeDB
 
 con = con()
 cur =  con.cursor()
@@ -14,7 +14,7 @@ cur.execute("""
 
 cur.execute(""" 
     CREATE TABLE IF NOT EXISTS dim_produtos(
-        idProdutos INT PRIMARY KEY,
+        idProduto INT PRIMARY KEY,
         nomeProduto VARCHAR(100) NOT NULL,
         categoria VARCHAR(100) NOT NULL,
         marca VARCHAR(100) NOT NULL
@@ -23,7 +23,7 @@ cur.execute("""
 
 cur.execute(""" 
     CREATE TABLE IF NOT EXISTS fato_vendas(
-        idVendas INT PRIMARY KEY,
+        idVenda INT PRIMARY KEY,
         id_Cliente INT NOT NULL,
         id_Produto INT NOT NULL,
         data DATE NOT NULL,
