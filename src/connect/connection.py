@@ -26,9 +26,12 @@ def con():
     return connection
 
 
-def closeDB(connection,cursor):
+def closeDB(connection,cursor = None):
        if connection and connection.is_connected():
-        cursor.close()
+
+        if cursor != None:
+            cursor.close()
+            
         connection.close()
         print("\nMySQL connection closed.")
 
