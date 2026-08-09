@@ -17,8 +17,8 @@ def con():
             database=os.getenv("DB_NAME")
         )
 
-        if connection.is_connected():
-            print("Connected successfully to the database")
+        #if connection.is_connected():
+            #print("Connected successfully to the database")
 
     except Error as e:
         print(f"Error while connecting to MySQL: {e}")
@@ -33,5 +33,5 @@ def closeDB(connection,cursor = None):
             cursor.close()
             
         connection.close()
-        print("\nMySQL connection closed.")
+        #print("\nMySQL connection closed.")
 
