@@ -4,6 +4,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import pandas as pd
+import datetime
 import plotly.express as px
 import streamlit as st
 from sql.query import (
@@ -51,11 +52,15 @@ st.markdown(
 # ==========================================
 
 with st.sidebar:
-    st.title("⚙️ Filtros",text_alignment="justify")
+    st.title("⚙️ Filtros", text_alignment="justify")
     st.divider()
 
-    data_inicio = get_date_min_max("min")
-    data_fim = get_date_min_max("max")
+    # 1. Tratamento para as datas (com fallback se retornar None)
+    min_db = get_date_min_max("min")
+    max_db = get_date_min_max("max")
+
+    data_inicio = min_db if min_db is not None else datetime.date(2026, 1, 1)
+    data_fim = max_db if max_db is not None else datetime.date.today()
 
     dt = st.date_input(
         "Período",
@@ -70,9 +75,18 @@ with st.sidebar:
         st.session_state["categoria"] = "Todos"
         st.session_state["marca"] = "Todos"
 
-    states_options = ["Todos"] + get_states()
-    category_options = ["Todos"] + get_category()
-    mark_options = ["Todos"] + get_mark()
+    # 2. Tratamento para as listas (impede concatenação de ['Todos'] + None)
+    states_list = get_states() or []
+    category_list = get_category() or []
+    mark_list = get_mark() or []
+
+    states_options = ["Todos"] + states_list
+    category_options = ["Todos"] + category_list
+    mark_options = ["Todos"] + mark_list
+
+    # Aviso visual caso o banco de dados esteja zerado
+    if min_db is None and not states_list:
+        st.warning("⚠️ Banco de dados vazio. Filtros desativados.")
 
     state_filter = st.selectbox("Estado", states_options, key="estado")
     category_filter = st.selectbox(
@@ -80,7 +94,6 @@ with st.sidebar:
     )
     mark_filter = st.selectbox("Marca", mark_options, key="marca")
 
-    # Botão de limpar direto na sidebar (removidas as colunas não utilizadas)
     if st.button("Limpar 🔄", on_click=resetar_filtros, use_container_width=True):
         st.rerun()
 

@@ -15,12 +15,16 @@ def get_date_min_max(temp):
 
     cur = connection.cursor()
     try:
-        if temp == 'min':
-            cur.execute("SELECT min(data) FROM fato_vendas;")
+        if temp == "min":
+            cur.execute("SELECT MIN(data) FROM fato_vendas;")
         else:
-            cur.execute("SELECT max(data) FROM fato_vendas;")
+            cur.execute("SELECT MAX(data) FROM fato_vendas;")
 
-        return cur.fetchone()[0]
+        row = cur.fetchone()
+        if not row or row[0] is None:
+            return None
+
+        return row[0]
     finally:
         closeDB(connection, cur)
 
@@ -32,8 +36,14 @@ def get_states():
 
     cur = connection.cursor()
     try:
-        cur.execute("SELECT DISTINCT estado FROM dim_clientes ORDER BY estado;")
+        cur.execute(
+            "SELECT DISTINCT estado FROM dim_clientes WHERE estado IS NOT NULL ORDER BY estado;"
+        )
         results = cur.fetchall()
+
+        if not results:
+            return None
+
         return [x[0] for x in results]
     finally:
         closeDB(connection, cur)
@@ -46,8 +56,14 @@ def get_category():
 
     cur = connection.cursor()
     try:
-        cur.execute("SELECT DISTINCT categoria FROM dim_produtos ORDER BY categoria;")
+        cur.execute(
+            "SELECT DISTINCT categoria FROM dim_produtos WHERE categoria IS NOT NULL ORDER BY categoria;"
+        )
         results = cur.fetchall()
+
+        if not results:
+            return None
+
         return [x[0] for x in results]
     finally:
         closeDB(connection, cur)
@@ -60,59 +76,64 @@ def get_mark():
 
     cur = connection.cursor()
     try:
-        cur.execute("SELECT DISTINCT marca FROM dim_produtos ORDER BY marca;")
+        cur.execute(
+            "SELECT DISTINCT marca FROM dim_produtos WHERE marca IS NOT NULL ORDER BY marca;"
+        )
         results = cur.fetchall()
+
+        if not results:
+            return None
+
         return [x[0] for x in results]
     finally:
         closeDB(connection, cur)
 
 
-def query_filtro(date,state,category,mark):
-
+def query_filtro(date, state, category, mark):
     connection = con()
     if connection is None or not connection.is_connected():
         raise RuntimeError("Falha ao conectar ao banco de dados")
 
-
     query = "SELECT * FROM v_sales_etl_pipiline WHERE 1 = 1 "
     params = []
 
-    if len(date) == 1:
+    # Tratamento caso o parâmetro date seja None/vazio
+    if date:
+        if len(date) == 1:
+            dt_inicio = date[0].strftime("%Y-%m-%d")
+            query += "AND data = %s "
+            params.append(dt_inicio)
 
-        dt_inicio = date[0].strftime("%Y-%m-%d")
-        query += "AND data = %s "
-        params.append(dt_inicio)
+        elif len(date) == 2:
+            dt_inicio = date[0].strftime("%Y-%m-%d")
+            dt_fim = date[1].strftime("%Y-%m-%d")
 
-    elif len(date) == 2:
+            query += "AND data BETWEEN %s AND %s "
+            params.append(dt_inicio)
+            params.append(dt_fim)
 
-        dt_inicio = date[0].strftime("%Y-%m-%d")
-        dt_fim = date[1].strftime("%Y-%m-%d")
-
-        query += "AND data BETWEEN %s AND %s "
-
-        params.append(dt_inicio)
-        params.append(dt_fim)
-
-    if state != 'Todos':
+    if state and state != "Todos":
         query += "AND estado = %s "
         params.append(state)
 
-    if category != 'Todos':
+    if category and category != "Todos":
         query += "AND categoria = %s "
         params.append(category)
 
-    if mark != 'Todos':
+    if mark and mark != "Todos":
         query += "AND marca = %s "
         params.append(mark)
 
     cur = connection.cursor()
     try:
-        cur.execute(query,params)
+        cur.execute(query, params)
 
         results = cur.fetchall()
-        columns = cur.column_names
+        if not results:
+            return None
 
-        return pd.DataFrame(results,columns=columns)
+        columns = cur.column_names
+        return pd.DataFrame(results, columns=columns)
     finally:
         closeDB(connection, cur)
 
