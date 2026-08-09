@@ -1,4 +1,4 @@
-from connect.connection import con, closeDB
+from src.connect.connection import con, closeDB
 
 con = con()
 cur =  con.cursor()
@@ -34,6 +34,20 @@ cur.execute("""
         FOREIGN KEY (id_Cliente) REFERENCES dim_clientes(idCliente),
         FOREIGN KEY (id_Produto) REFERENCES dim_produtos(idProdutos)
     );
+ """)
+
+cur.execute(""" 
+    CREATE VIEW IF NOT EXISTS v_sales_etl_pipiline AS
+       SELECT
+            f_v.idVenda,d_c.idCliente,d_p.idProduto,
+            d_c.nomeCliente,d_c.cidade,d_c.estado,
+            d_p.nomeProduto,d_p.categoria,d_p.marca,
+            f_v.data,f_v.quantidade,f_v.valor_unitario,f_v.valor_total
+        FROM fato_vendas AS f_v
+        INNER JOIN dim_clientes AS d_c
+            ON f_v.id_Cliente = d_c.idCliente
+        INNER JOIN dim_produtos AS d_p
+            ON f_v.id_Produto = d_p.idProduto;
  """)
 
 closeDB(con,cur)
