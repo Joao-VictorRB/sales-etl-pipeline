@@ -15,6 +15,25 @@ from sql.query import (
     query_filtro,
 )
 
+def format_currency_compact(value):
+    if value is None:
+        return "R$ 0,00"
+
+    abs_val = abs(value)
+
+    if abs_val >= 1_000_000_000:
+        formatted = f"{value / 1_000_000_000:,.2f} Bi"
+    elif abs_val >= 1_000_000:
+        formatted = f"{value / 1_000_000:,.2f} Mi"
+    elif abs_val >= 100_000: 
+        formatted = f"{value / 1_000:,.1f} Mil"
+    else:
+        formatted = f"{value:,.2f}"
+
+    return (
+        f"R$ {formatted.replace(',', 'X').replace('.', ',').replace('X', '.')}"
+    )
+
 # 1. Configuração da página
 st.set_page_config(
     page_title="Dashboard de Vendas",
@@ -132,11 +151,11 @@ kpi1, kpi2, kpi3, kpi4 = st.columns(4, gap = "xxlarge")
 with kpi1:
     st.metric(
         label="💲 Faturamento Total",
-        value=f"R$ {total_earnings:,.2f}".replace(",", "X")
+        value = format_currency_compact(total_earnings),
+        help = f"Valor exato: R$ {total_earnings:,.2f}".replace(",", "X")
         .replace(".", ",")
         .replace("X", "."),
         border = True,
-        width = "stretch"
     )
 
 with kpi2:
@@ -299,6 +318,8 @@ with col_graf4:
             .reset_index()
             .sort_values(by="valor_total", ascending=False)
         )
+        df_estados["valor_total"] = pd.to_numeric(df_estados["valor_total"], errors="coerce")
+        df_estados["valor_formatado"] = df_estados["valor_total"].apply(format_currency_compact)
 
         col_mapa, col_tabela = st.columns([1.2, 0.45],gap="medium")
 
@@ -311,6 +332,11 @@ with col_graf4:
                 locations="estado",
                 featureidkey="properties.sigla",
                 color="valor_total",
+                hover_data={
+                    "valor_total": False,
+                    "valor_formatado": True,
+                },
+                labels={"valor_formatado": "Faturamento", "estado": "Estado"},
                 color_continuous_scale="Blues",
                 template="plotly_white",
             )
@@ -318,10 +344,16 @@ with col_graf4:
             fig_map.update_layout(
                 margin=dict(l=0, r=0, t=0, b=0),
                 height=300,
-                coloraxis_showscale=False,
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
                 font=dict(color="#111827"),
+                coloraxis_showscale=True,  # Exibe a barra de cores
+                coloraxis_colorbar=dict(
+                    title="R$",  # Título da legenda
+                    tickprefix="R$ ",  # Prefixo do valor na barra
+                    thickness=10,  # Largura da barra de cores
+                    len=0.8,  # Altura da barra
+                ),
             )
 
             st.plotly_chart(fig_map, use_container_width=True)
@@ -330,11 +362,7 @@ with col_graf4:
             df_estados_tab = df_estados.copy()
             df_estados_tab["Faturamento"] = df_estados_tab[
                 "valor_total"
-            ].apply(
-                lambda x: f"R$ {x:,.2f}".replace(",", "X")
-                .replace(".", ",")
-                .replace("X", ".")
-            )
+            ].apply(format_currency_compact)
 
             st.dataframe(
                 df_estados_tab[["estado", "Faturamento"]],
@@ -344,7 +372,7 @@ with col_graf4:
             )
     else:
         st.info("Nenhum dado encontrado para gerar as vendas por estado.")
-
+        
 st.markdown(
     """
     <style>
