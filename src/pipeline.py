@@ -1,8 +1,8 @@
 from pathlib import Path
-from extract import extract
-from transform import transform
-from load import load
-from connect.connection import con, closeDB
+from src.extract import extract
+from src.transform import transform
+from src.load import load
+from src.connect.connection import con, closeDB
 
 try:
     path_root = Path(__file__).resolve().parent.parent
