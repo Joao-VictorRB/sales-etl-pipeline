@@ -13,6 +13,8 @@ from sql.query import (
     get_mark,
     get_states,
     query_filtro,
+    get_checkDB,
+    get_playPipeline,
 )
 
 def format_currency_compact(value):
@@ -118,6 +120,17 @@ with st.sidebar:
 
     st.divider()
 
+    checkDB = get_checkDB()
+
+    if checkDB is None:
+        if st.button("🚀 Executar ETL e carregar dados", use_container_width=True):
+            get_playPipeline()
+            st.rerun()
+    else:
+        st.success("✅ Dados já carregados! O banco está pronto para consulta.")
+
+    st.divider()
+
     st.subheader("Sobre o projeto")
     st.caption(
         """
@@ -141,6 +154,10 @@ st.divider()
 # ==========================================
 # 4. CARDS DE INDICADORES (KPIs)
 # ==========================================
+
+if df is None:
+    df = pd.DataFrame()
+
 total_earnings = df["valor_total"].sum() if not df.empty else 0
 sales_qtd = df["idVenda"].count() if not df.empty else 0
 sales_product = df["quantidade"].sum() if not df.empty else 0
