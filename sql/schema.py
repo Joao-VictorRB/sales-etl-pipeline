@@ -1,3 +1,7 @@
+import os
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src.connect.connection import con, closeDB
 
 con = con()
@@ -32,12 +36,12 @@ cur.execute("""
         valor_total DECIMAL(10,2) NOT NULL,
 
         FOREIGN KEY (id_Cliente) REFERENCES dim_clientes(idCliente),
-        FOREIGN KEY (id_Produto) REFERENCES dim_produtos(idProdutos)
+        FOREIGN KEY (id_Produto) REFERENCES dim_produtos(idProduto)
     );
  """)
 
 cur.execute(""" 
-    CREATE VIEW IF NOT EXISTS v_sales_etl_pipiline AS
+    CREATE OR REPLACE VIEW v_sales_etl_pipiline AS
        SELECT
             f_v.idVenda,d_c.idCliente,d_p.idProduto,
             d_c.nomeCliente,d_c.cidade,d_c.estado,
@@ -50,4 +54,5 @@ cur.execute("""
             ON f_v.id_Produto = d_p.idProduto;
  """)
 
+con.commit()
 closeDB(con,cur)
