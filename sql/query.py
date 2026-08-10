@@ -4,6 +4,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.connect.connection import con, closeDB
+from src.pipeline import pipeline
 import pandas as pd
 
 #----   BARRA LATERAL -------
@@ -137,13 +138,26 @@ def query_filtro(date, state, category, mark):
     finally:
         closeDB(connection, cur)
 
+def get_checkDB():
+    connection = con()
+    if connection is None or not connection.is_connected():
+        raise RuntimeError("Falha ao conectar ao banco de dados")
 
+    cur = connection.cursor()
+    try:
+        cur.execute(
+            "SELECT 1 FROM v_sales_etl_pipiline LIMIT 1"
+        )
+        results = cur.fetchone()
 
+        if not results:
+            return None
+        else:
+            return True
+ 
+    finally:
+        closeDB(connection, cur)
 
-
-
-
-
-
-
+def get_playPipeline():
+    pipeline()
 
