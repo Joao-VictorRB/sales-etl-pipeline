@@ -84,7 +84,7 @@ def transform_vendas(df,df_clientes,df_produtos):
 
         today = pd.Timestamp.today()
         
-        df['data'] = pd.to_datetime(df['data'], errors='coerce')
+        df['data'] = pd.to_datetime(df['data'], format='%Y/%m/%d', errors='coerce')
 
         if pd.api.types.is_datetime64_any_dtype(df['data']):
 
